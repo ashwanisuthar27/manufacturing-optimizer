@@ -7,6 +7,7 @@ This project is an AI-powered tool for estimating and optimizing manufacturing c
 - **Predictive Cost Estimation**: Uses XGBoost model to predict manufacturing costs based on input parameters like quantity used, recycled material percentage, production output, material efficiency, and recycled impact.
 - **Prescriptive Optimization**: Employs optimization algorithms to find the best combination of parameters that minimize costs while satisfying production constraints.
 - **Interactive Web Interface**: Built with Streamlit for easy user interaction and real-time results.
+- **Gemini API Integration**: Use Gemini to automatically explain the model output in text and ask follow-up questions about the cost estimate.
 - **Data-Driven Insights**: Includes a Jupyter notebook with exploratory data analysis and model training code.
 
 ## Installation
@@ -41,7 +42,9 @@ This project is an AI-powered tool for estimating and optimizing manufacturing c
 
 4. View the predicted cost for current settings.
 
-5. Click "Run AI Optimization" to find optimal parameters that minimize costs.
+5. Optionally enter your Gemini API key in the sidebar to generate an AI explanation and ask follow-up questions.
+
+6. Click "Run AI Optimization" to find optimal parameters that minimize costs.
 
 ## Requirements
 
@@ -54,6 +57,7 @@ This project is an AI-powered tool for estimating and optimizing manufacturing c
   - xgboost
   - scipy
   - joblib
+  - google-genai
 
 ## Model Training
 

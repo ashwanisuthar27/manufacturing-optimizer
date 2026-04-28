@@ -1,16 +1,61 @@
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import google.genai as genai
 from scipy.optimize import minimize
 
 st.set_page_config(page_title="AI Manufacturing Optimizer", layout="wide")
+
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 @st.cache_resource
 def load_models():
     model = joblib.load('xgb_manufacturing_model.pkl')
     scaler = joblib.load('manufacturing_scaler.pkl')
     return model, scaler
+
+
+def call_gemini(prompt, api_key, model=GEMINI_MODEL, temperature=0.3, max_output_tokens=512):
+    if not api_key:
+        raise ValueError("Gemini API key is required for explanation or question answering.")
+    client = genai.Client(api_key=api_key)
+    config = genai.types.GenerateContentConfig(
+        temperature=temperature,
+        max_output_tokens=max_output_tokens,
+    )
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=config,
+    )
+    return response.text.strip()
+
+
+def build_gemini_context(cost, qty, recycled, output, mat_eff, rec_impact, optimized=False):
+    section = "optimized estimate" if optimized else "current estimate"
+    return (
+        f"You are a manufacturing optimization analyst. Explain the {section} in plain language.\n"
+        f"Inputs:\n"
+        f"- Quantity Used (kg): {qty}\n"
+        f"- Recycled Material (%): {recycled}\n"
+        f"- Production Output (Units): {output}\n"
+        f"- Material Efficiency: {mat_eff}\n"
+        f"- Recycled Impact: {rec_impact}\n"
+        f"Predicted cost: ${cost:,.2f}\n"
+        f"Please describe the key cost drivers, whether this estimate is efficient, and recommend actions to reduce cost."
+    )
+
+
+def ask_gemini_question(question, context, api_key):
+    prompt = (
+        f"{context}\n\n"
+        f"User question: {question}\n"
+        f"Answer the question based on the model output and explanation context. "
+        f"If the question is unrelated, say you can only answer questions about the manufacturing cost estimate."
+    )
+    return call_gemini(prompt, api_key)
 
 try:
     model, scaler = load_models()
@@ -33,6 +78,13 @@ st.sidebar.header("Current Machine Settings")
 current_qty = st.sidebar.slider("Current Quantity Used (kg)", 50.0, 200.0, 150.0)
 current_recycled = st.sidebar.slider("Current Recycled Material (%)", 0.0, 50.0, 15.0)
 
+gemini_api_key = st.sidebar.text_input(
+    "Gemini API Key",
+    value=os.getenv("GEMINI_API_KEY", ""),
+    type="password",
+    help="Enter your Gemini API key to generate explanations and ask follow-up questions."
+)
+
 def predict_cost(qty, recycled, output, mat_eff, rec_impact):
     input_data = pd.DataFrame(np.zeros((1, len(model_columns))), columns=model_columns)
     input_data['Quantity Used (kg)'] = qty
@@ -48,6 +100,52 @@ current_cost = predict_cost(current_qty, current_recycled, target_output, fixed_
 
 st.subheader("1. Predictive Estimator")
 st.metric(label="Estimated Cost (Current Settings)", value=f"${current_cost:,.2f}")
+
+if "gemini_explanation" not in st.session_state:
+    st.session_state["gemini_explanation"] = ""
+if "gemini_answer" not in st.session_state:
+    st.session_state["gemini_answer"] = ""
+
+st.subheader("Gemini Explanation")
+with st.expander("Generate or ask about the cost estimate", expanded=True):
+    if gemini_api_key:
+        if st.button("Explain this estimate with Gemini", key="explain_button"):
+            try:
+                explanation_prompt = build_gemini_context(
+                    current_cost,
+                    current_qty,
+                    current_recycled,
+                    target_output,
+                    fixed_material_efficiency,
+                    fixed_recycled_impact,
+                )
+                st.session_state["gemini_explanation"] = call_gemini(explanation_prompt, gemini_api_key)
+            except Exception as exc:
+                st.error(f"Gemini explanation failed: {exc}")
+
+        if st.session_state["gemini_explanation"]:
+            st.markdown(st.session_state["gemini_explanation"])
+
+        question = st.text_area(
+            "Ask Gemini about this estimate",
+            key="gemini_question",
+            placeholder="What drove this cost? How can we reduce it?"
+        )
+        if st.button("Ask Gemini", key="ask_button"):
+            if not question.strip():
+                st.warning("Enter a question before asking Gemini.")
+            else:
+                try:
+                    context = st.session_state["gemini_explanation"] or explanation_prompt
+                    st.session_state["gemini_answer"] = ask_gemini_question(question, context, gemini_api_key)
+                except Exception as exc:
+                    st.error(f"Gemini question failed: {exc}")
+
+        if st.session_state["gemini_answer"]:
+            st.markdown("**Gemini response:**")
+            st.markdown(st.session_state["gemini_answer"])
+    else:
+        st.info("Enter your Gemini API key in the sidebar to enable explanation and Q&A.")
 
 st.markdown("---")
 st.subheader("2. Prescriptive Optimizer")
