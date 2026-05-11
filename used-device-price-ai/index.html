@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Used Device Price AI — Smart Price Estimator for India</title>
+    <meta name="description" content="AI-powered tool to estimate fair market prices for used mobile phones and laptops in India. Compare devices, get recommendations, and find the best deals.">
+    <meta name="keywords" content="used phone price, second hand mobile price, used laptop price, India, price estimator, AI">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-layout">
+
+        <!-- ═══ SIDEBAR ═══ -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-logo">🤖</span>
+                <div>
+                    <div class="sidebar-title">DevicePrice AI</div>
+                    <div class="sidebar-subtitle">Smart Estimator</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="nav-link active" data-nav="home" href="#">
+                    <span class="nav-icon">🏠</span> Home
+                </a>
+                <a class="nav-link" data-nav="estimate" href="#">
+                    <span class="nav-icon">💰</span> Price Estimator
+                </a>
+                <a class="nav-link" data-nav="compare" href="#">
+                    <span class="nav-icon">⚖️</span> Compare Devices
+                </a>
+                <a class="nav-link" data-nav="processor-compare" href="#">
+                    <span class="nav-icon">🧠</span> Processor Compare
+                </a>
+                <a class="nav-link" data-nav="recommendations" href="#">
+                    <span class="nav-icon">⭐</span> Recommendations
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="theme-toggle" id="themeToggle">
+                    <span id="themeIcon">☀️</span>
+                    <span>Toggle Theme</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ═══ OVERLAY (mobile) ═══ -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- ═══ MAIN ═══ -->
+        <main class="main-content">
+
+            <!-- Top Bar -->
+            <header class="topbar">
+                <button class="menu-btn" id="menuBtn">☰</button>
+                <span class="topbar-title">Used Device Price AI</span>
+            </header>
+
+            <div class="page-container">
+
+                <!-- ──── HOME ──── -->
+                <section class="page-section active" id="home" style="display:block;">
+                    <div class="hero-section">
+                        <h1>Know the <span class="gradient-text">Real Value</span><br>of Any Used Device</h1>
+                        <p>AI-powered price estimation for used mobile phones and laptops in India. Get instant, accurate market valuations with our smart pricing engine.</p>
+                        <button class="btn-primary" onclick="navigateTo('estimate')">
+                            <span class="btn-icon">⚡</span> Start Estimating
+                        </button>
+                        <div class="hero-features">
+                            <span class="hero-feature">📱 Phones &amp; Laptops</span>
+                            <span class="hero-feature">🇮🇳 India Market Prices</span>
+                            <span class="hero-feature">🤖 AI-Powered</span>
+                            <span class="hero-feature">⚡ Instant Results</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="form-grid" style="max-width:700px; margin: 0 auto;">
+                        <div class="stat" style="cursor:pointer" onclick="navigateTo('estimate')">
+                            <span class="stat-label">Brands Covered</span>
+                            <span class="stat-value">25+</span>
+                        </div>
+                        <div class="stat" style="cursor:pointer" onclick="navigateTo('compare')">
+                            <span class="stat-label">Devices in Database</span>
+                            <span class="stat-value">3,400+</span>
+                        </div>
+                        <div class="stat" style="cursor:pointer" onclick="navigateTo('recommendations')">
+                            <span class="stat-label">Price Accuracy</span>
+                            <span class="stat-value">92%</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ──── ESTIMATE ──── -->
+                <section class="page-section" id="estimate">
+                    <div class="section-header">
+                        <h1>💰 Price Estimator</h1>
+                        <p>Fill in the device details below to get an AI-estimated used price.</p>
+                    </div>
+
+                    <form id="estimateForm" autocomplete="off">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="deviceType">Device Type</label>
+                                <select class="form-select" id="deviceType" required>
+                                    <option value="phone">📱 Phone</option>
+                                    <option value="laptop">💻 Laptop</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="brand">Brand</label>
+                                <select class="form-select" id="brand" required>
+                                    <option value="">Select Brand</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="series">Series</label>
+                                <select class="form-select" id="series" required>
+                                    <option value="">Select Brand first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="model">Model Name</label>
+                                <select class="form-select" id="model" required>
+                                    <option value="">Select Series first</option>
+                                </select>
+                            </div>
+                            <div class="form-group new-model-only" id="customModelGroup" style="display:none;">
+                                <label class="form-label" for="customModel">Enter Exact Model Name</label>
+                                <input class="form-input" type="text" id="customModel" placeholder="e.g. Galaxy S27 Ultra">
+                                <p class="form-helper">For upcoming phones, enter the full expected model name and specs below.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="ram">RAM</label>
+                                <select class="form-select" id="ram" required>
+                                    <option value="">Select RAM</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="storage">Storage</label>
+                                <select class="form-select" id="storage" required>
+                                    <option value="">Select Storage</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="age">Age (Months)</label>
+                                <input class="form-input" type="number" id="age" min="0" max="120" placeholder="e.g. 12" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="launchYear">Launch Year</label>
+                                <input class="form-input" type="number" id="launchYear" min="2015" max="2035" placeholder="e.g. 2026">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="condition">Condition</label>
+                                <select class="form-select" id="condition" required>
+                                    <option value="Excellent">Excellent — Like New</option>
+                                    <option value="Good" selected>Good — Minor Wear</option>
+                                    <option value="Fair">Fair — Visible Scratches</option>
+                                    <option value="Poor">Poor — Needs Repair</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="processor">Processor</label>
+                                <select class="form-select" id="processor">
+                                    <option value="">Select Processor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="battery">Battery</label>
+                                <select class="form-select" id="battery">
+                                    <option value="">Select Battery</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="new-model-note" id="newModelNote" style="display:none;">
+                            <strong>Series prediction mode:</strong> Manual specs get extra weight because this model is not in the dataset yet.
+                        </div>
+
+                        <div style="text-align:center; margin-top:8px;">
+                            <button type="submit" class="btn-primary" id="estimateBtn">
+                                <span class="btn-icon">⚡</span> Estimate Price
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Result -->
+                    <div id="estimationResult" style="display:none; margin-top:32px;"></div>
+
+                    <!-- Recommendations (appears after estimation) -->
+                    <div id="recommendationsSection" style="display:none; margin-top:36px;">
+                        <div class="section-header">
+                            <h1>⭐ Similar Devices</h1>
+                            <p>Devices in a similar price range you might want to consider.</p>
+                        </div>
+                        <div class="recs-grid" id="recommendationsGrid"></div>
+                    </div>
+                </section>
+
+                <!-- ──── COMPARE ──── -->
+                <section class="page-section" id="compare">
+                    <div class="section-header">
+                        <h1>⚖️ Compare Devices</h1>
+                        <p>Select two devices for a detailed side-by-side comparison with visual scoring.</p>
+                    </div>
+
+                    <div class="compare-controls">
+                        <!-- Device 1 -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="compareBrand1">Brand 1</label>
+                                <select class="form-select" id="compareBrand1">
+                                    <option value="">Select Brand</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="compareSeries1">Series 1</label>
+                                <select class="form-select" id="compareSeries1">
+                                    <option value="">Select Brand first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="compareDevice1">Model 1</label>
+                                <select class="form-select" id="compareDevice1">
+                                    <option value="">Select Series first</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="compare-vs" style="display: flex; align-items: center; justify-content: center;">VS</div>
+
+                        <!-- Device 2 -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="compareBrand2">Brand 2</label>
+                                <select class="form-select" id="compareBrand2">
+                                    <option value="">Select Brand</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="compareSeries2">Series 2</label>
+                                <select class="form-select" id="compareSeries2">
+                                    <option value="">Select Brand first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="compareDevice2">Model 2</label>
+                                <select class="form-select" id="compareDevice2">
+                                    <option value="">Select Series first</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin-bottom:28px;">
+                        <button class="btn-primary" id="compareBtn">
+                            <span class="btn-icon">⚖️</span> Compare Now
+                        </button>
+                    </div>
+
+                    <div id="comparisonResult" style="display:none;">
+                        <table class="compare-table">
+                            <thead>
+                                <tr>
+                                    <th>Specification</th>
+                                    <th id="compareName1">Device 1</th>
+                                    <th id="compareName2">Device 2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compareTableBody"></tbody>
+                        </table>
+
+                        <div class="chart-container">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ──── PROCESSOR COMPARE ──── -->
+                <section class="page-section" id="processor-compare">
+                    <div class="section-header">
+                        <h1>🧠 Processor Compare</h1>
+                        <p>Compare mobile and laptop processors side-by-side using NanoReview data.</p>
+                    </div>
+
+                    <div class="compare-controls">
+                        <!-- Processor 1 -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="procCompany1">Company 1</label>
+                                <select class="form-select" id="procCompany1">
+                                    <option value="">Select Company</option>
+                                    <option value="Qualcomm">Qualcomm</option>
+                                    <option value="MediaTek">MediaTek</option>
+                                    <option value="Apple">Apple</option>
+                                    <option value="Samsung">Samsung</option>
+                                    <option value="Google">Google</option>
+                                    <option value="Intel">Intel</option>
+                                    <option value="AMD">AMD</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="procSeries1">Series 1</label>
+                                <select class="form-select" id="procSeries1">
+                                    <option value="">Select Company first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="procModel1">Processor 1</label>
+                                <select class="form-select" id="procModel1">
+                                    <option value="">Select Series first</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="compare-vs" style="display: flex; align-items: center; justify-content: center;">VS</div>
+
+                        <!-- Processor 2 -->
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="procCompany2">Company 2</label>
+                                <select class="form-select" id="procCompany2">
+                                    <option value="">Select Company</option>
+                                    <option value="Qualcomm">Qualcomm</option>
+                                    <option value="MediaTek">MediaTek</option>
+                                    <option value="Apple">Apple</option>
+                                    <option value="Samsung">Samsung</option>
+                                    <option value="Google">Google</option>
+                                    <option value="Intel">Intel</option>
+                                    <option value="AMD">AMD</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="procSeries2">Series 2</label>
+                                <select class="form-select" id="procSeries2">
+                                    <option value="">Select Company first</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="procModel2">Processor 2</label>
+                                <select class="form-select" id="procModel2">
+                                    <option value="">Select Series first</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin-bottom:28px;">
+                        <button class="btn-primary" id="compareProcBtn">
+                            <span class="btn-icon">🧠</span> Compare Processors
+                        </button>
+                    </div>
+
+                    <!-- Loading indicator for scraping -->
+                    <div id="procLoading" style="display:none; text-align:center; margin-bottom:24px;">
+                        <span class="spinner"></span> <span style="color:var(--text-secondary); margin-left:8px;">Fetching data from NanoReview...</span>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="procComparisonResult" style="display:none;">
+                        <table class="compare-table">
+                            <thead>
+                                <tr>
+                                    <th>Specification</th>
+                                    <th id="procCompareName1">Processor 1</th>
+                                    <th id="procCompareName2">Processor 2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="procCompareTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- ──── RECOMMENDATIONS ──── -->
+                <section class="page-section" id="recommendations">
+                    <div class="section-header">
+                        <h1>🎯 Find My Perfect Phone</h1>
+                        <p>Tell us what you need and we'll recommend the best devices for you.</p>
+                    </div>
+
+                    <!-- Preference Filters -->
+                    <div class="rec-filters">
+                        <!-- Price -->
+                        <div class="filter-box">
+                            <div class="filter-title">💰 Budget</div>
+                            <div class="filter-options" id="filterPrice">
+                                <button class="filter-btn" data-value="Low">Under ₹15K</button>
+                                <button class="filter-btn active" data-value="Mid">₹15K – ₹30K</button>
+                                <button class="filter-btn" data-value="Value for Money">₹30K – ₹50K</button>
+                                <button class="filter-btn" data-value="High">₹50K+</button>
+                            </div>
+                        </div>
+                        <!-- Camera -->
+                        <div class="filter-box">
+                            <div class="filter-title">📷 Camera</div>
+                            <div class="filter-options" id="filterCamera">
+                                <button class="filter-btn" data-value="Avg">Average</button>
+                                <button class="filter-btn active" data-value="Good">Good</button>
+                                <button class="filter-btn" data-value="Best">Best</button>
+                            </div>
+                        </div>
+                        <!-- Performance -->
+                        <div class="filter-box">
+                            <div class="filter-title">🚀 Performance</div>
+                            <div class="filter-options" id="filterPerformance">
+                                <button class="filter-btn" data-value="Low">Basic</button>
+                                <button class="filter-btn active" data-value="Avg">Average</button>
+                                <button class="filter-btn" data-value="High">High</button>
+                            </div>
+                        </div>
+                        <!-- Size -->
+                        <div class="filter-box">
+                            <div class="filter-title">📐 Size</div>
+                            <div class="filter-options" id="filterSize">
+                                <button class="filter-btn" data-value="Compact">Compact</button>
+                                <button class="filter-btn active" data-value="Big">Big Screen</button>
+                            </div>
+                        </div>
+                        <!-- Battery -->
+                        <div class="filter-box">
+                            <div class="filter-title">🔋 Battery</div>
+                            <div class="filter-options" id="filterBattery">
+                                <button class="filter-btn" data-value="Small is good">Small is fine</button>
+                                <button class="filter-btn active" data-value="Last longer">Long lasting</button>
+                            </div>
+                        </div>
+                        <!-- Charging -->
+                        <div class="filter-box">
+                            <div class="filter-title">⚡ Charging</div>
+                            <div class="filter-options" id="filterCharging">
+                                <button class="filter-btn" data-value="Slow">Slow</button>
+                                <button class="filter-btn" data-value="Medium">Medium</button>
+                                <button class="filter-btn active" data-value="Fast">Fast</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center; margin: 24px 0;">
+                        <button class="btn-primary" id="findPhoneBtn">
+                            <span class="btn-icon">🔍</span> Find My Perfect Phone
+                        </button>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="recLoading" style="display:none; text-align:center; margin-bottom:24px;">
+                        <span class="spinner"></span> <span style="color:var(--text-secondary); margin-left:8px;">Searching best devices for you...</span>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="recResults" style="display:none;">
+                        <div class="section-header" style="margin-bottom: 16px;">
+                            <h2 id="recResultTitle">📱 We found these for you</h2>
+                            <p id="recResultSubtitle">Based on your preferences</p>
+                        </div>
+                        <div class="recs-grid" id="recResultsGrid"></div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>© 2026 Used Device Price AI · Built with 🤖 Machine Learning · <a href="#">Privacy</a> · <a href="#">Terms</a></p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
